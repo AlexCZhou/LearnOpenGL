@@ -1,6 +1,10 @@
 #include<glad/glad.h>
 #include<GLFW/glfw3.h>
 #include<iostream>
+#include<glm/glm.hpp>
+#include<glm/gtc/matrix_transform.hpp>
+#include<glm/gtc/type_ptr.hpp>
+
 #include "Shader.h"
 #include "stb_image.h"
 
@@ -125,17 +129,25 @@ int main() {
         std::cout << "Failed to load texture" << std::endl;
     }
     stbi_image_free(data);
-
     
     ourShader.use();
     ourShader.setInt("texture1", 0);
     ourShader.setInt("texture2", 1);
+
+    
 
     while (!glfwWindowShouldClose(window)) {
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
+        //变换
+        glm::mat4 trans;
+        trans = glm::translate(trans, glm::vec3(0.5f, -0.5f, 0.0f));
+        trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0, 0.0, 1.0));
+        trans = glm::scale(trans, glm::vec3(0.5, 0.5, 0.5));
+        unsigned int transformLoc = glGetUniformLocation(ourShader.ID, "transform");
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
         
         //绑定纹理单元
         glActiveTexture(GL_TEXTURE0);
