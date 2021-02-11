@@ -63,10 +63,10 @@ int main() {
     glEnable(GL_DEPTH_TEST);
     
     Shader ourShader("Resource/shader/shader.vsh", "Resource/shader/shader.fsh");
-
+    Shader lightShader("Resource/shader/shader.vsh", "Resource/shader/light.fsh");
    
     float vertices[] = {
-    //顶点              颜色            纹理
+    //顶点                纹理
     -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
      0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
      0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
@@ -186,17 +186,10 @@ int main() {
     ourShader.use();
     ourShader.setInt("texture1", 0);
     ourShader.setInt("texture2", 1);
+    ourShader.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
+    ourShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
 
-    
-    //移动相机矩阵
-    glm::mat4 view;
-    view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
 
-    //投影矩阵
-    glm::mat4 projection;
-    projection = glm::perspective(glm::radians(45.0f), (float)(screenWidth / screenHeight), 0.1f, 100.0f);
-
-    
     
     while (!glfwWindowShouldClose(window)) {
         // per-frame time logic
@@ -205,20 +198,16 @@ int main() {
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         //因为我们使用了深度测试，我们也想要在每次渲染迭代之前清除深度缓冲（否则前一帧的深度信息仍然保存在缓冲中）
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // input
         // -----
+        ourShader.use();
         processInput(window);
         
-        //变换矩阵
-        glm::mat4 model;
-        model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(1.0f, 0.5f, 1.0f));
-
-        int modelLoc = glGetUniformLocation(ourShader.ID, "model");
-        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+        
         
         // pass projection matrix to shader (note that in this case it could change every frame)
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)screenWidth / (float)screenHeight, 0.1f, 100.0f);
@@ -237,8 +226,27 @@ int main() {
 
         glBindVertexArray(VAO);
         
+        
         ourShader.use();
+        //物体变换矩阵
+        glm::mat4 model;
+        model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(1.0f, 0.5f, 1.0f));
+
+        int modelLoc = glGetUniformLocation(ourShader.ID, "model");
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
         glDrawArrays(GL_TRIANGLES, 0, 36);
+
+        //光源变换矩阵
+        lightShader.use();
+        lightShader.setMat4("projection", projection);
+        lightShader.setMat4("view", view);
+        glm::mat4 light;
+        light = glm::translate(light, glm::vec3(3.0f, 3.0f, 3.0f));
+        light = glm::scale(light, glm::vec3(0.5f, 0.5f, 0.5f));
+        lightShader.setMat4("model",light);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+
+
         glBindVertexArray(0);
         glfwSwapBuffers(window);
         glfwPollEvents();

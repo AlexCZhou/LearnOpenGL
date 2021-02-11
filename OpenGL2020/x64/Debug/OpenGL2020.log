@@ -1,11 +1,11 @@
 ﻿  Main.cpp
 D:\Games\OpenGL\OpenGL2020\OpenGL2020\Main.cpp(43,56): warning C4244: “参数”: 从“const float”转换到“int”，可能丢失数据
 D:\Games\OpenGL\OpenGL2020\OpenGL2020\Main.cpp(43,43): warning C4244: “参数”: 从“const float”转换到“int”，可能丢失数据
-D:\Games\OpenGL\OpenGL2020\OpenGL2020\Main.cpp(204,28): warning C4244: “初始化”: 从“double”转换到“float”，可能丢失数据
-D:\Games\OpenGL\OpenGL2020\OpenGL2020\Main.cpp(273,17): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
-D:\Games\OpenGL\OpenGL2020\OpenGL2020\Main.cpp(274,17): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
-D:\Games\OpenGL\OpenGL2020\OpenGL2020\Main.cpp(278,19): warning C4244: “初始化”: 从“double”转换到“float”，可能丢失数据
-D:\Games\OpenGL\OpenGL2020\OpenGL2020\Main.cpp(279,19): warning C4244: “初始化”: 从“double”转换到“float”，可能丢失数据
-D:\Games\OpenGL\OpenGL2020\OpenGL2020\Main.cpp(281,13): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
-D:\Games\OpenGL\OpenGL2020\OpenGL2020\Main.cpp(282,13): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+D:\Games\OpenGL\OpenGL2020\OpenGL2020\Main.cpp(197,28): warning C4244: “初始化”: 从“double”转换到“float”，可能丢失数据
+D:\Games\OpenGL\OpenGL2020\OpenGL2020\Main.cpp(281,17): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+D:\Games\OpenGL\OpenGL2020\OpenGL2020\Main.cpp(282,17): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+D:\Games\OpenGL\OpenGL2020\OpenGL2020\Main.cpp(286,19): warning C4244: “初始化”: 从“double”转换到“float”，可能丢失数据
+D:\Games\OpenGL\OpenGL2020\OpenGL2020\Main.cpp(287,19): warning C4244: “初始化”: 从“double”转换到“float”，可能丢失数据
+D:\Games\OpenGL\OpenGL2020\OpenGL2020\Main.cpp(289,13): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+D:\Games\OpenGL\OpenGL2020\OpenGL2020\Main.cpp(290,13): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
   OpenGL2020.vcxproj -> D:\Games\OpenGL\OpenGL2020\x64\Debug\OpenGL2020.exe
