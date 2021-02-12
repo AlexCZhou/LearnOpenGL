@@ -1,3 +1,4 @@
+
 #include<glad/glad.h>
 #include<GLFW/glfw3.h>
 #include<iostream>
@@ -5,13 +6,18 @@
 #include<glm/gtc/matrix_transform.hpp>
 #include<glm/gtc/type_ptr.hpp>
 
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+
 
 #include "Shader.h"
 #include "Camera.h"
 #include "stb_image.h"
 
-const float screenWidth = 800;
-const float screenHeight = 600;
+
+const float screenWidth = 1366;
+const float screenHeight = 768;
 
 // camera
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
@@ -24,6 +30,7 @@ float deltaTime = 0.0f;	// time between current frame and last frame
 float lastFrame = 0.0f;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+bool cursorDisable = true;
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 //void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow* window);
@@ -53,11 +60,12 @@ int main() {
     glfwSetCursorPosCallback(window, mouse_callback);
     // tell GLFW to capture our mouse
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
-    glViewport(0, 0, 800, 600);
+    glViewport(0, 0, screenWidth, screenHeight);
 
     //创建Z缓冲
     glEnable(GL_DEPTH_TEST);
@@ -65,6 +73,19 @@ int main() {
     Shader ourShader("Resource/shader/shader.vsh", "Resource/shader/shader.fsh");
     Shader lightShader("Resource/shader/shader.vsh", "Resource/shader/light.fsh");
    
+    //创建IMGUI
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+
+    // Setup Dear ImGui style
+    ImGui::StyleColorsDark();
+    //ImGui::StyleColorsClassic();
+
+    // Setup Platform/Renderer backends
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init("#version 330");
+
     float vertices[] = {
     //顶点                纹理          法向量
     -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,  0.0f,  0.0f, -1.0f,
@@ -194,9 +215,50 @@ int main() {
     ourShader.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
     ourShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
     
+    // Our state
+    bool show_demo_window = true;
+    bool show_another_window = false;
+    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
-    
     while (!glfwWindowShouldClose(window)) {
+        // Start the Dear ImGui frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+        if (show_demo_window)
+            ImGui::ShowDemoWindow(&show_demo_window);
+        {
+            static float f = 0.0f;
+            static int counter = 0;
+
+            ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+
+            ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+            ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
+            ImGui::Checkbox("Another Window", &show_another_window);
+
+            ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+            ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+
+            if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+                counter++;
+            ImGui::SameLine();
+            ImGui::Text("counter = %d", counter);
+
+            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+            ImGui::End();
+        }
+        if (show_another_window) {
+            ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+            ImGui::Text("Hello from another window!");
+            if (ImGui::Button("Close Me"))
+                show_another_window = false;
+            ImGui::End();
+        }
+
+        // Rendering
+        
+
         // per-frame time logic
         // --------------------
         float currentFrame = glfwGetTime();
@@ -255,9 +317,22 @@ int main() {
 
 
         glBindVertexArray(0);
+
+        //GUI
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        //===
+        
         glfwSwapBuffers(window);
         glfwPollEvents();
+        
     }
+
+    // Cleanup
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
     glfwTerminate();
@@ -286,21 +361,33 @@ void processInput(GLFWwindow* window) {
     if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
         camera.ProcessKeyboard(DOWN, deltaTime);
 
+    if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS) {
+        // tell GLFW to capture our mouse
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        cursorDisable = true;
+    }
+    if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) {
+        // tell GLFW to capture our mouse
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        cursorDisable = false;
+    }
 }
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
-    if (firstMouse) {
+    if (cursorDisable) {
+        if (firstMouse) {
+            lastX = xpos;
+            lastY = ypos;
+            firstMouse = false;
+        }
+
+        float xoffset = xpos - lastX;
+        float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+
         lastX = xpos;
         lastY = ypos;
-        firstMouse = false;
+
+        camera.ProcessMouseMovement(xoffset, yoffset);
     }
-
-    float xoffset = xpos - lastX;
-    float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
-
-    lastX = xpos;
-    lastY = ypos;
-
-    camera.ProcessMouseMovement(xoffset, yoffset);
 }
 
