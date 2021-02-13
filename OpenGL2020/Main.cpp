@@ -1,4 +1,4 @@
-
+ï»¿
 #include<glad/glad.h>
 #include<GLFW/glfw3.h>
 #include<iostream>
@@ -34,7 +34,8 @@ bool cursorDisable = true;
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 //void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow* window);
-
+//Imgui
+void loadImgui(ImVec4& imObjColor,float& modelAngelX,float& modelAngelY, float& modelAngelZ, glm::vec3& lightPos);
 int main() {
 
     //init windows
@@ -67,16 +68,18 @@ int main() {
     }
     glViewport(0, 0, screenWidth, screenHeight);
 
-    //´´½¨Z»º³å
+    //åˆ›å»ºZç¼“å†²
     glEnable(GL_DEPTH_TEST);
     
     Shader ourShader("Resource/shader/shader.vsh", "Resource/shader/shader.fsh");
     Shader lightShader("Resource/shader/shader.vsh", "Resource/shader/light.fsh");
    
-    //´´½¨IMGUI
+    //åˆ›å»ºIMGUI
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
+    //ImFont* font = io.Fonts->AddFontFromFileTTF("Resource/font/SourceHanSerifCN-Medium-6.otf", 16.0f);
+
 
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
@@ -87,7 +90,7 @@ int main() {
     ImGui_ImplOpenGL3_Init("#version 330");
 
     float vertices[] = {
-    //¶¥µã                ÎÆÀí          ·¨ÏòÁ¿
+    //é¡¶ç‚¹                çº¹ç†          æ³•å‘é‡
     -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,  0.0f,  0.0f, -1.0f,
      0.5f, -0.5f, -0.5f,  1.0f, 0.0f,  0.0f,  0.0f, -1.0f,
      0.5f,  0.5f, -0.5f,  1.0f, 1.0f,  0.0f,  0.0f, -1.0f,
@@ -134,48 +137,48 @@ int main() {
     unsigned int VBO, VAO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
-    // 1. °ó¶¨¶¥µãÊı×é¶ÔÏó
+    // 1. ç»‘å®šé¡¶ç‚¹æ•°ç»„å¯¹è±¡
     glBindVertexArray(VAO);
-    // 2. °ÑÎÒÃÇµÄ¶¥µãÊı×é¸´ÖÆµ½Ò»¸ö¶¥µã»º³åÖĞ£¬¹©OpenGLÊ¹ÓÃ
+    // 2. æŠŠæˆ‘ä»¬çš„é¡¶ç‚¹æ•°ç»„å¤åˆ¶åˆ°ä¸€ä¸ªé¡¶ç‚¹ç¼“å†²ä¸­ï¼Œä¾›OpenGLä½¿ç”¨
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    // 4. Éè¶¨¶¥µãÊôĞÔÖ¸Õë
-    //µÚÒ»¸ö²ÎÊı0 ´ú±ílayout(location=0)¶¨ÒåÁËposition¶¥µãÊôĞÔÎ»ÖÃ
-    //µÚ¶ş¸ö²ÎÊıÖ¸¶¨¶¥µãÊôĞÔµÄ´óĞ¡¡£¶¥µãÊôĞÔÊÇÒ»¸övec3£¬ËüÓÉ3¸öÖµ×é³É£¬ËùÒÔ´óĞ¡ÊÇ3
-    //µÚÈı¸ö²ÎÊıÖ¸¶¨Êı¾İµÄÀàĞÍ£¬ÕâÀïÊÇGL_FLOAT(GLSLÖĞvec*¶¼ÊÇÓÉ¸¡µãÊıÖµ×é³ÉµÄ)
-    //µÚËÄ¸ö²ÎÊı¶¨ÒåÎÒÃÇÊÇ·ñÏ£ÍûÊı¾İ±»±ê×¼»¯(Normalize)¡£Èç¹ûÎÒÃÇÉèÖÃÎªGL_TRUE£¬ËùÓĞÊı¾İ¶¼»á±»Ó³Éäµ½0£¨¶ÔÓÚÓĞ·ûºÅĞÍsignedÊı¾İÊÇ-1£©µ½1Ö®¼ä¡£ÎÒÃÇ°ÑËüÉèÖÃÎªGL_FALSE
-    //µÚÎå¸ö²ÎÊı½Ğ×ö²½³¤(Stride)£¬Ëü¸æËßÎÒÃÇÔÚÁ¬ĞøµÄ¶¥µãÊôĞÔ×éÖ®¼äµÄ¼ä¸ô¡£ÓÉÓÚÏÂ¸ö×éÎ»ÖÃÊı¾İÔÚ3¸öfloatÖ®ºó£¬ÎÒÃÇ°Ñ²½³¤ÉèÖÃÎª3 * sizeof(float)¡£Òª×¢ÒâµÄÊÇÓÉÓÚÎÒÃÇ
-    //	ÖªµÀÕâ¸öÊı×éÊÇ½ôÃÜÅÅÁĞµÄ£¨ÔÚÁ½¸ö¶¥µãÊôĞÔÖ®¼äÃ»ÓĞ¿ÕÏ¶£©ÎÒÃÇÒ²¿ÉÒÔÉèÖÃÎª0À´ÈÃOpenGL¾ö¶¨¾ßÌå²½³¤ÊÇ¶àÉÙ£¨Ö»ÓĞµ±ÊıÖµÊÇ½ôÃÜÅÅÁĞÊ±²Å¿ÉÓÃ£©¡£Ò»µ©ÎÒÃÇÓĞ¸ü¶àµÄ¶¥µãÊôĞÔ£¬
-    //	ÎÒÃÇ¾Í±ØĞë¸üĞ¡ĞÄµØ¶¨ÒåÃ¿¸ö¶¥µãÊôĞÔÖ®¼äµÄ¼ä¸ô£¬ÎÒÃÇÔÚºóÃæ»á¿´µ½¸ü¶àµÄÀı×Ó
-    //×îºóÒ»¸ö²ÎÊıµÄÀàĞÍÊÇvoid*£¬ËùÒÔĞèÒªÎÒÃÇ½øĞĞÕâ¸öÆæ¹ÖµÄÇ¿ÖÆÀàĞÍ×ª»»¡£Ëü±íÊ¾Î»ÖÃÊı¾İÔÚ»º³åÖĞÆğÊ¼Î»ÖÃµÄÆ«ÒÆÁ¿(Offset)¡£ÓÉÓÚÎ»ÖÃÊı¾İÔÚÊı×éµÄ¿ªÍ·£¬ËùÒÔÕâÀïÊÇ0¡£
+    // 4. è®¾å®šé¡¶ç‚¹å±æ€§æŒ‡é’ˆ
+    //ç¬¬ä¸€ä¸ªå‚æ•°0 ä»£è¡¨layout(location=0)å®šä¹‰äº†positioné¡¶ç‚¹å±æ€§ä½ç½®
+    //ç¬¬äºŒä¸ªå‚æ•°æŒ‡å®šé¡¶ç‚¹å±æ€§çš„å¤§å°ã€‚é¡¶ç‚¹å±æ€§æ˜¯ä¸€ä¸ªvec3ï¼Œå®ƒç”±3ä¸ªå€¼ç»„æˆï¼Œæ‰€ä»¥å¤§å°æ˜¯3
+    //ç¬¬ä¸‰ä¸ªå‚æ•°æŒ‡å®šæ•°æ®çš„ç±»å‹ï¼Œè¿™é‡Œæ˜¯GL_FLOAT(GLSLä¸­vec*éƒ½æ˜¯ç”±æµ®ç‚¹æ•°å€¼ç»„æˆçš„)
+    //ç¬¬å››ä¸ªå‚æ•°å®šä¹‰æˆ‘ä»¬æ˜¯å¦å¸Œæœ›æ•°æ®è¢«æ ‡å‡†åŒ–(Normalize)ã€‚å¦‚æœæˆ‘ä»¬è®¾ç½®ä¸ºGL_TRUEï¼Œæ‰€æœ‰æ•°æ®éƒ½ä¼šè¢«æ˜ å°„åˆ°0ï¼ˆå¯¹äºæœ‰ç¬¦å·å‹signedæ•°æ®æ˜¯-1ï¼‰åˆ°1ä¹‹é—´ã€‚æˆ‘ä»¬æŠŠå®ƒè®¾ç½®ä¸ºGL_FALSE
+    //ç¬¬äº”ä¸ªå‚æ•°å«åšæ­¥é•¿(Stride)ï¼Œå®ƒå‘Šè¯‰æˆ‘ä»¬åœ¨è¿ç»­çš„é¡¶ç‚¹å±æ€§ç»„ä¹‹é—´çš„é—´éš”ã€‚ç”±äºä¸‹ä¸ªç»„ä½ç½®æ•°æ®åœ¨3ä¸ªfloatä¹‹åï¼Œæˆ‘ä»¬æŠŠæ­¥é•¿è®¾ç½®ä¸º3 * sizeof(float)ã€‚è¦æ³¨æ„çš„æ˜¯ç”±äºæˆ‘ä»¬
+    //	çŸ¥é“è¿™ä¸ªæ•°ç»„æ˜¯ç´§å¯†æ’åˆ—çš„ï¼ˆåœ¨ä¸¤ä¸ªé¡¶ç‚¹å±æ€§ä¹‹é—´æ²¡æœ‰ç©ºéš™ï¼‰æˆ‘ä»¬ä¹Ÿå¯ä»¥è®¾ç½®ä¸º0æ¥è®©OpenGLå†³å®šå…·ä½“æ­¥é•¿æ˜¯å¤šå°‘ï¼ˆåªæœ‰å½“æ•°å€¼æ˜¯ç´§å¯†æ’åˆ—æ—¶æ‰å¯ç”¨ï¼‰ã€‚ä¸€æ—¦æˆ‘ä»¬æœ‰æ›´å¤šçš„é¡¶ç‚¹å±æ€§ï¼Œ
+    //	æˆ‘ä»¬å°±å¿…é¡»æ›´å°å¿ƒåœ°å®šä¹‰æ¯ä¸ªé¡¶ç‚¹å±æ€§ä¹‹é—´çš„é—´éš”ï¼Œæˆ‘ä»¬åœ¨åé¢ä¼šçœ‹åˆ°æ›´å¤šçš„ä¾‹å­
+    //æœ€åä¸€ä¸ªå‚æ•°çš„ç±»å‹æ˜¯void*ï¼Œæ‰€ä»¥éœ€è¦æˆ‘ä»¬è¿›è¡Œè¿™ä¸ªå¥‡æ€ªçš„å¼ºåˆ¶ç±»å‹è½¬æ¢ã€‚å®ƒè¡¨ç¤ºä½ç½®æ•°æ®åœ¨ç¼“å†²ä¸­èµ·å§‹ä½ç½®çš„åç§»é‡(Offset)ã€‚ç”±äºä½ç½®æ•°æ®åœ¨æ•°ç»„çš„å¼€å¤´ï¼Œæ‰€ä»¥è¿™é‡Œæ˜¯0ã€‚
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-    //ÉèÖÃÑÕÉ«¶¥µãÊôĞÔ
+    //è®¾ç½®é¢œè‰²é¡¶ç‚¹å±æ€§
     /*glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);*/
 
-    //ÉèÖÃÎÆÀí¶¥µãÊôĞÔ
+    //è®¾ç½®çº¹ç†é¡¶ç‚¹å±æ€§
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(2);
 
-    //ÉèÖÃ·¨ÏòÁ¿¶¥µãÊôĞÔ
+    //è®¾ç½®æ³•å‘é‡é¡¶ç‚¹å±æ€§
     glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(5 * sizeof(float)));
     glEnableVertexAttribArray(3);
 
-    //ÎÆÀí
-    //ÈÃÔØÈëÍ¼Æ¬µÄÍ·ÎÄ¼ş·´×ªyÖá
+    //çº¹ç†
+    //è®©è½½å…¥å›¾ç‰‡çš„å¤´æ–‡ä»¶åè½¬yè½´
     stbi_set_flip_vertically_on_load(true);
     unsigned int textureBox;
     glGenTextures(1, &textureBox);
     glBindTexture(GL_TEXTURE_2D, textureBox);
-    // Îªµ±Ç°°ó¶¨µÄÎÆÀí¶ÔÏóÉèÖÃ»·ÈÆ¡¢¹ıÂË·½Ê½
+    // ä¸ºå½“å‰ç»‘å®šçš„çº¹ç†å¯¹è±¡è®¾ç½®ç¯ç»•ã€è¿‡æ»¤æ–¹å¼
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    // ¼ÓÔØ²¢Éú³ÉÎÆÀí
+    // åŠ è½½å¹¶ç”Ÿæˆçº¹ç†
     int width, height, nrChannels;
     unsigned char* data = stbi_load("Resource/texture/container.jpg", &width, &height, &nrChannels, 0);
     if (data) {
@@ -191,12 +194,12 @@ int main() {
     unsigned int textureFace;
     glGenTextures(1, &textureFace);
     glBindTexture(GL_TEXTURE_2D, textureFace);
-    // Îªµ±Ç°°ó¶¨µÄÎÆÀí¶ÔÏóÉèÖÃ»·ÈÆ¡¢¹ıÂË·½Ê½
+    // ä¸ºå½“å‰ç»‘å®šçš„çº¹ç†å¯¹è±¡è®¾ç½®ç¯ç»•ã€è¿‡æ»¤æ–¹å¼
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    // ¼ÓÔØ²¢Éú³ÉÎÆÀí
+    // åŠ è½½å¹¶ç”Ÿæˆçº¹ç†
     data = stbi_load("Resource/texture/awesomeface.png", &width, &height, &nrChannels, 0);
     if (data) {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
@@ -212,52 +215,27 @@ int main() {
     ourShader.use();
     ourShader.setInt("texture1", 0);
     ourShader.setInt("texture2", 1);
-    ourShader.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
+    
     ourShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
     
-    // Our state
-    bool show_demo_window = true;
-    bool show_another_window = false;
-    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+    // Our state for Imgui
+    ImVec4 imObjColor = ImVec4(1.0f, 0.5f, 0.31f, 1.00f);
+    glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
+    
+    float modelAngelX = 0.0f;
+    float modelAngelY = 0.0f;
+    float modelAngelZ = 0.0f;
+
 
     while (!glfwWindowShouldClose(window)) {
         // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
-        if (show_demo_window)
-            ImGui::ShowDemoWindow(&show_demo_window);
-        {
-            static float f = 0.0f;
-            static int counter = 0;
 
-            ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+        ImGui::ShowDemoWindow();
 
-            ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-            ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-            ImGui::Checkbox("Another Window", &show_another_window);
-
-            ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-            ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
-
-            if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-                counter++;
-            ImGui::SameLine();
-            ImGui::Text("counter = %d", counter);
-
-            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-            ImGui::End();
-        }
-        if (show_another_window) {
-            ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-            ImGui::Text("Hello from another window!");
-            if (ImGui::Button("Close Me"))
-                show_another_window = false;
-            ImGui::End();
-        }
-
-        // Rendering
-        
+        loadImgui(imObjColor, modelAngelX, modelAngelY, modelAngelZ,lightPos);
 
         // per-frame time logic
         // --------------------
@@ -266,15 +244,15 @@ int main() {
         lastFrame = currentFrame;
 
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-        //ÒòÎªÎÒÃÇÊ¹ÓÃÁËÉî¶È²âÊÔ£¬ÎÒÃÇÒ²ÏëÒªÔÚÃ¿´ÎäÖÈ¾µü´úÖ®Ç°Çå³ıÉî¶È»º³å£¨·ñÔòÇ°Ò»Ö¡µÄÉî¶ÈĞÅÏ¢ÈÔÈ»±£´æÔÚ»º³åÖĞ£©
+        //å› ä¸ºæˆ‘ä»¬ä½¿ç”¨äº†æ·±åº¦æµ‹è¯•ï¼Œæˆ‘ä»¬ä¹Ÿæƒ³è¦åœ¨æ¯æ¬¡æ¸²æŸ“è¿­ä»£ä¹‹å‰æ¸…é™¤æ·±åº¦ç¼“å†²ï¼ˆå¦åˆ™å‰ä¸€å¸§çš„æ·±åº¦ä¿¡æ¯ä»ç„¶ä¿å­˜åœ¨ç¼“å†²ä¸­ï¼‰
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // input
         // -----
         ourShader.use();
         processInput(window);
-        
-        glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
+        glm::vec3 objColor(imObjColor.x, imObjColor.y, imObjColor.z);
+        ourShader.setVec3("objectColor", objColor);
         ourShader.setVec3("lightPos", lightPos);
         ourShader.setVec3("viewPos", camera.Position);
 
@@ -287,7 +265,7 @@ int main() {
         ourShader.setMat4("view", view);
         
 
-        //°ó¶¨ÎÆÀíµ¥Ôª
+        //ç»‘å®šçº¹ç†å•å…ƒ
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, textureBox);
         glActiveTexture(GL_TEXTURE1);
@@ -297,15 +275,16 @@ int main() {
         
         
         ourShader.use();
-        //ÎïÌå±ä»»¾ØÕó
+        //ç‰©ä½“å˜æ¢çŸ©é˜µ
         glm::mat4 model;
-        //model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        model = glm::rotate(model, modelAngelX, glm::vec3(1.0f, 0.0f, 0.0f));
+        model = glm::rotate(model, modelAngelY, glm::vec3(0.0f, 1.0f, 0.0f));
+        model = glm::rotate(model, modelAngelZ, glm::vec3(0.0f, 0.0f, 1.0f));
 
-        int modelLoc = glGetUniformLocation(ourShader.ID, "model");
-        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+        ourShader.setMat4("model", model);
         glDrawArrays(GL_TRIANGLES, 0, 36);
 
-        //¹âÔ´±ä»»¾ØÕó
+        //å…‰æºå˜æ¢çŸ©é˜µ
         lightShader.use();
         lightShader.setMat4("projection", projection);
         lightShader.setMat4("view", view);
@@ -391,3 +370,24 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
     }
 }
 
+void loadImgui(ImVec4& imObjColor,float &modelAngelX, float& modelAngelY,float& modelAngelZ, glm::vec3 &lightPos) {
+    float f = 0.0f;
+    int counter = 0;
+
+    ImGui::Begin("Lighting test");                          // Create a window called "Hello, world!" and append into it.
+
+    ImGui::Text("Object color");               // Display some text (you can use a format strings too)
+
+    ImGui::ColorEdit3("clear color", (float*)&imObjColor); // Edit 3 floats representing a color
+
+    ImGui::SliderAngle("modelAngel X", &modelAngelX);
+    ImGui::SliderAngle("modelAngel Y", &modelAngelY);
+    ImGui::SliderAngle("modelAngel Z", &modelAngelZ);
+
+    ImGui::DragFloat("lightPos x", &lightPos.x, 0.005f);
+    ImGui::DragFloat("lightPos y", &lightPos.y, 0.005f);
+    ImGui::DragFloat("lightPos z", &lightPos.z, 0.005f);
+
+    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+    ImGui::End();
+}
