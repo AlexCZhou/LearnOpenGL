@@ -157,9 +157,6 @@
     <ClInclude Include="imstb_truetype.h" />
     <ClInclude Include="Shader.h" />
   </ItemGroup>
-  <ItemGroup>
-    <Font Include="Resource\font\SourceHanSerifCN-Medium-6.otf" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

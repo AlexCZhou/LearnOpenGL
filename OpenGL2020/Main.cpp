@@ -35,7 +35,11 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 //void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow* window);
 //Imgui
-void loadImgui(ImVec4& imObjColor,float& modelAngelX,float& modelAngelY, float& modelAngelZ, glm::vec3& lightPos);
+void loadImgui(ImVec4& imObjColor, float& modelAngelX,float& modelAngelY, float& modelAngelZ,
+               glm::vec3& lightPos, glm::vec3& ambient, glm::vec3& specular, glm::vec3& diffuse,
+               float& shininess);
+
+void console(GLFWwindow* win, int key, int code, int action, int mods);
 int main() {
 
     //init windows
@@ -61,6 +65,8 @@ int main() {
     glfwSetCursorPosCallback(window, mouse_callback);
     // tell GLFW to capture our mouse
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetKeyCallback(window, console);
+
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         std::cout << "Failed to initialize GLAD" << std::endl;
@@ -78,7 +84,7 @@ int main() {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
-    //ImFont* font = io.Fonts->AddFontFromFileTTF("Resource/font/SourceHanSerifCN-Medium-6.otf", 16.0f);
+    //ImFont* font = io.Fonts->AddFontFromFileTTF("Resource/font/SourceHanSerifCN-Medium-6.otf", 20.0f,NULL,io.Fonts->GetGlyphRangesChineseSimplifiedCommon());
 
 
     // Setup Dear ImGui style
@@ -225,7 +231,11 @@ int main() {
     float modelAngelX = 0.0f;
     float modelAngelY = 0.0f;
     float modelAngelZ = 0.0f;
-
+    
+    glm::vec3 ambient(0.0215f, 0.1745f, 0.0215f);
+    glm::vec3 diffuse(0.07568f, 0.61424f, 0.07568f);
+    glm::vec3 specular(0.633f, 0.727811f, 0.633f);
+    float shininess = 0.6f;
 
     while (!glfwWindowShouldClose(window)) {
         // Start the Dear ImGui frame
@@ -235,7 +245,7 @@ int main() {
 
         ImGui::ShowDemoWindow();
 
-        loadImgui(imObjColor, modelAngelX, modelAngelY, modelAngelZ,lightPos);
+        loadImgui(imObjColor, modelAngelX, modelAngelY, modelAngelZ, lightPos, ambient, specular, diffuse, shininess);
 
         // per-frame time logic
         // --------------------
@@ -255,7 +265,10 @@ int main() {
         ourShader.setVec3("objectColor", objColor);
         ourShader.setVec3("lightPos", lightPos);
         ourShader.setVec3("viewPos", camera.Position);
-
+        ourShader.setVec3("material.ambient", ambient);
+        ourShader.setVec3("material.specular", specular);
+        ourShader.setVec3("material.diffuse", diffuse);
+        ourShader.setFloat("material.shininess", shininess);
         // pass projection matrix to shader (note that in this case it could change every frame)
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)screenWidth / (float)screenHeight, 0.1f, 100.0f);
         ourShader.setMat4("projection", projection);
@@ -340,16 +353,18 @@ void processInput(GLFWwindow* window) {
     if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
         camera.ProcessKeyboard(DOWN, deltaTime);
 
-    if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS) {
-        // tell GLFW to capture our mouse
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-        cursorDisable = true;
-    }
-    if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) {
-        // tell GLFW to capture our mouse
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-        cursorDisable = false;
-    }
+    //if (glfwGetKey(window, GLFW_KEY_GRAVE_ACCENT) == GLFW_PRESS) {
+    //    if(cursorDisable){
+    //    // tell GLFW to capture our mouse
+    //        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    //        cursorDisable = false;
+    //    }
+    //    else {
+    //        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    //        cursorDisable = true;
+    //    }
+    //}
+    
 }
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
@@ -368,17 +383,18 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
 
         camera.ProcessMouseMovement(xoffset, yoffset);
     }
+    else {
+        firstMouse = true;
+    }
 }
 
-void loadImgui(ImVec4& imObjColor,float &modelAngelX, float& modelAngelY,float& modelAngelZ, glm::vec3 &lightPos) {
-    float f = 0.0f;
-    int counter = 0;
+void loadImgui(ImVec4& imObjColor,float &modelAngelX, float& modelAngelY,float& modelAngelZ,
+               glm::vec3 &lightPos, glm::vec3& ambient, glm::vec3& specular,
+               glm::vec3& diffuse,float& shininess) {
 
     ImGui::Begin("Lighting test");                          // Create a window called "Hello, world!" and append into it.
 
-    ImGui::Text("Object color");               // Display some text (you can use a format strings too)
-
-    ImGui::ColorEdit3("clear color", (float*)&imObjColor); // Edit 3 floats representing a color
+    ImGui::ColorEdit3("Object color", (float*)&imObjColor); // Edit 3 floats representing a color
 
     ImGui::SliderAngle("modelAngel X", &modelAngelX);
     ImGui::SliderAngle("modelAngel Y", &modelAngelY);
@@ -387,7 +403,35 @@ void loadImgui(ImVec4& imObjColor,float &modelAngelX, float& modelAngelY,float& 
     ImGui::DragFloat("lightPos x", &lightPos.x, 0.005f);
     ImGui::DragFloat("lightPos y", &lightPos.y, 0.005f);
     ImGui::DragFloat("lightPos z", &lightPos.z, 0.005f);
+    float ambientTemp[3] = { ambient.x,ambient.y,ambient.z };
+    ImGui::DragFloat3("ambient", ambientTemp, 0.005f);
+    float specularTemp[3] = { specular.x,specular.y,specular.z };
+    ImGui::DragFloat3("specular", specularTemp, 0.005f);
+    float diffuseTemp[3] = { diffuse.x,diffuse.y,diffuse.z };
+    ImGui::DragFloat3("diffuse", diffuseTemp, 0.005f);
+
+    ImGui::DragFloat("shininess", &shininess, 0.005f);
+
+    ambient = glm::make_vec3(ambientTemp);
+    specular = glm::make_vec3(specularTemp);
+    diffuse = glm::make_vec3(diffuseTemp);
 
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
     ImGui::End();
+}
+
+void console(GLFWwindow* window, int key, int code, int action, int mods) {
+    if (key == GLFW_KEY_GRAVE_ACCENT && action == GLFW_RELEASE) {
+        std::cout << "shit" << std::endl;
+    
+        if (cursorDisable) {
+            // tell GLFW to capture our mouse
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+            cursorDisable = false;
+        }
+        else {
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            cursorDisable = true;
+        }
+    }
 }

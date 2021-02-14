@@ -84,7 +84,4 @@
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
-  <ItemGroup>
-    <Font Include="Resource\font\SourceHanSerifCN-Medium-6.otf" />
-  </ItemGroup>
 </Project>
