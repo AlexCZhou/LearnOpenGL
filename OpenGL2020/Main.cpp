@@ -186,9 +186,9 @@ int main() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     // 加载并生成纹理
     int width, height, nrChannels;
-    unsigned char* data = stbi_load("Resource/texture/container.jpg", &width, &height, &nrChannels, 0);
+    unsigned char* data = stbi_load("Resource/texture/container2.png", &width, &height, &nrChannels, 0);
     if (data) {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
     }
     else {
@@ -206,7 +206,7 @@ int main() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     // 加载并生成纹理
-    data = stbi_load("Resource/texture/awesomeface.png", &width, &height, &nrChannels, 0);
+    data = stbi_load("Resource/texture/container2_specular.png", &width, &height, &nrChannels, 0);
     if (data) {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
@@ -219,9 +219,9 @@ int main() {
 
     
     ourShader.use();
-    ourShader.setInt("texture1", 0);
-    ourShader.setInt("texture2", 1);
-    
+    ourShader.setInt("material.diffuse", 0);
+    ourShader.setInt("material.specular", 1);
+
     ourShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
     
     // Our state for Imgui
@@ -235,7 +235,7 @@ int main() {
     glm::vec3 ambient(0.0215f, 0.1745f, 0.0215f);
     glm::vec3 diffuse(0.07568f, 0.61424f, 0.07568f);
     glm::vec3 specular(0.633f, 0.727811f, 0.633f);
-    float shininess = 0.6f;
+    float shininess = 0.6f*128.0f;
 
     while (!glfwWindowShouldClose(window)) {
         // Start the Dear ImGui frame
@@ -265,10 +265,10 @@ int main() {
         ourShader.setVec3("objectColor", objColor);
         ourShader.setVec3("lightPos", lightPos);
         ourShader.setVec3("viewPos", camera.Position);
-        ourShader.setVec3("material.ambient", ambient);
+
         ourShader.setVec3("material.specular", specular);
-        ourShader.setVec3("material.diffuse", diffuse);
         ourShader.setFloat("material.shininess", shininess);
+
         // pass projection matrix to shader (note that in this case it could change every frame)
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)screenWidth / (float)screenHeight, 0.1f, 100.0f);
         ourShader.setMat4("projection", projection);
@@ -396,9 +396,9 @@ void loadImgui(ImVec4& imObjColor,float &modelAngelX, float& modelAngelY,float& 
 
     ImGui::ColorEdit3("Object color", (float*)&imObjColor); // Edit 3 floats representing a color
 
-    ImGui::SliderAngle("modelAngel X", &modelAngelX);
-    ImGui::SliderAngle("modelAngel Y", &modelAngelY);
-    ImGui::SliderAngle("modelAngel Z", &modelAngelZ);
+    ImGui::SliderAngle("modelAngel X", &modelAngelX, -90.0f, 90.0f);
+    ImGui::SliderAngle("modelAngel Y", &modelAngelY, -90.0f, 90.0f);
+    ImGui::SliderAngle("modelAngel Z", &modelAngelZ, -90.0f, 90.0f);
 
     ImGui::DragFloat("lightPos x", &lightPos.x, 0.005f);
     ImGui::DragFloat("lightPos y", &lightPos.y, 0.005f);
