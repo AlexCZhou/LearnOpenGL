@@ -282,13 +282,18 @@ int main() {
         ourShader.setVec3("material.specular", specular);
         ourShader.setFloat("material.shininess", shininess);
 
-        ourShader.setVec3("light.ambient", 1.0f, 1.0f, 1.0f);
-        ourShader.setVec3("light.diffuse", 1.0f, 1.0f, 1.0f);
-        ourShader.setVec3("light.specular", 1.0f,1.0f,1.0f);
+        ourShader.setVec3("spotlight.position", camera.Position);
+        ourShader.setVec3("spotlight.direction", camera.Front);
+        ourShader.setFloat("spotlight.cutOff", glm::cos(glm::radians(12.5f)));
+        ourShader.setFloat("spotlight.outerCutOff", glm::cos(glm::radians(17.5f)));
 
-        ourShader.setFloat("light.constant", 1.0f);
-        ourShader.setFloat("light.linear", 0.09f);
-        ourShader.setFloat("light.quadratic", 0.032f);
+        ourShader.setVec3("spotlight.ambient", 1.0f, 1.0f, 1.0f);
+        ourShader.setVec3("spotlight.diffuse", 1.0f, 1.0f, 1.0f);
+        ourShader.setVec3("spotlight.specular", 1.0f,1.0f,1.0f);
+
+        ourShader.setFloat("spotlight.constant", 1.0f);
+        ourShader.setFloat("spotlight.linear", 0.09f);
+        ourShader.setFloat("spotlight.quadratic", 0.032f);
 
 
         // pass projection matrix to shader (note that in this case it could change every frame)
