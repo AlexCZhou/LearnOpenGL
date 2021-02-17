@@ -276,15 +276,20 @@ int main() {
         processInput(window);
         glm::vec3 objColor(imObjColor.x, imObjColor.y, imObjColor.z);
         ourShader.setVec3("objectColor", objColor);
-        ourShader.setVec3("dirLight.direction", -0.2f,-1.0f,-0.3f);
+        ourShader.setVec3("light.position", lightPos);
         ourShader.setVec3("viewPos", camera.Position);
 
         ourShader.setVec3("material.specular", specular);
         ourShader.setFloat("material.shininess", shininess);
 
-        ourShader.setVec3("dirLight.ambient", 1.0f, 1.0f, 1.0f);
-        ourShader.setVec3("dirLight.diffuse", 1.0f, 1.0f, 1.0f);
-        ourShader.setVec3("dirLight.specular", 1.0f,1.0f,1.0f);
+        ourShader.setVec3("light.ambient", 1.0f, 1.0f, 1.0f);
+        ourShader.setVec3("light.diffuse", 1.0f, 1.0f, 1.0f);
+        ourShader.setVec3("light.specular", 1.0f,1.0f,1.0f);
+
+        ourShader.setFloat("light.constant", 1.0f);
+        ourShader.setFloat("light.linear", 0.09f);
+        ourShader.setFloat("light.quadratic", 0.032f);
+
 
         // pass projection matrix to shader (note that in this case it could change every frame)
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)screenWidth / (float)screenHeight, 0.1f, 100.0f);
