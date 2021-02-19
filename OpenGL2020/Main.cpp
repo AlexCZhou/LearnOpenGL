@@ -36,6 +36,15 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 //void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow* window);
 //Imgui
+//当前被选中的点光源
+int currentLight = 0;
+const char* pointLights[] = { "pointLight 1","pointLight 2","pointLight 3","pointLight 4" };
+glm::vec3 pointLightPositions[] = {
+        glm::vec3(0.7f,  0.2f,  2.0f),
+        glm::vec3(2.3f, -3.3f, -4.0f),
+        glm::vec3(-4.0f,  2.0f, -12.0f),
+        glm::vec3(0.0f,  0.0f, -3.0f)
+};
 void loadImgui();
 
 void console(GLFWwindow* win, int key, int code, int action, int mods);
@@ -107,12 +116,7 @@ int main() {
         glm::vec3(-1.3f,  1.0f, -1.5f)
     };
     
-    glm::vec3 pointLightPositions[] = {
-        glm::vec3(0.7f,  0.2f,  2.0f),
-        glm::vec3(2.3f, -3.3f, -4.0f),
-        glm::vec3(-4.0f,  2.0f, -12.0f),
-        glm::vec3(0.0f,  0.0f, -3.0f)
-    };
+    
 
     float vertices[] = {
     //顶点                纹理          法向量
@@ -256,6 +260,10 @@ int main() {
     glm::vec3 specular(0.633f, 0.727811f, 0.633f);
     float shininess = 0.6f*128.0f;
 
+    glm::vec3 tempColor = glm::vec3(1.0f, 1.0f, 1.0f);
+    float dur = 2.5f;
+    float cnt = 0.5f;
+    int lastLight = -1;
     while (!glfwWindowShouldClose(window)) {
         // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
@@ -350,7 +358,7 @@ int main() {
 
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
-
+        
         //定义点光源
         for (int i = 0; i < 4; i++) {
             
@@ -362,6 +370,32 @@ int main() {
             light = glm::translate(light, pointLightPositions[i]);
             light = glm::scale(light, glm::vec3(0.5f, 0.5f, 0.5f));
             lightShader.setMat4("model", light);
+            if (i == currentLight) {
+                if (lastLight != currentLight) {
+                    if(dur > 0.0f){ 
+                        dur -= deltaTime;
+                        if (cnt > 0.0f) {
+                            cnt -= deltaTime;
+                        }
+                        else {
+                            tempColor = glm::vec3(tempColor.x, abs(tempColor.y - 1.0f), abs(tempColor.z - 1.0f));
+                            cnt = 0.5f;
+                        }
+                    }
+                    else {
+                        dur = 2.5f;
+                        lastLight = currentLight;
+                    }
+                }
+                else {
+                    tempColor = glm::vec3(1.0f, 1.0f, 1.0f);
+                }
+                lightShader.setVec3("color", tempColor);
+            }
+            else {
+                lightShader.setVec3("color", glm::vec3(1.0f, 1.0f, 1.0f));
+            }
+            
             glDrawArrays(GL_TRIANGLES, 0, 36);
 
             ourShader.use();
@@ -465,7 +499,17 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
 
 void loadImgui() {
 
-    ImGui::Begin("Lighting test");                          // Create a window called "Hello, world!" and append into it.
+    ImGui::Begin("LearnOpenGL");         
+
+    ImGui::Text("WASD to move camera");
+    ImGui::Text("SPACE go up");
+    ImGui::Text("ctrl go down");
+    ImGui::Text("Press `(grave accent) key to enable/disable cursor.");
+
+    ImGui::Combo("PointLights", &currentLight, pointLights, IM_ARRAYSIZE(pointLights));
+    float tempLightPos[] = { pointLightPositions[currentLight].x,pointLightPositions[currentLight].y, pointLightPositions[currentLight].z };
+    ImGui::DragFloat3("currentLightPos", tempLightPos, 0.01f);
+    pointLightPositions[currentLight] = glm::make_vec3(tempLightPos);
 
     //ImGui::ColorEdit3("Object color", (float*)&imObjColor); // Edit 3 floats representing a color
 
@@ -495,8 +539,7 @@ void loadImgui() {
 
 void console(GLFWwindow* window, int key, int code, int action, int mods) {
     if (key == GLFW_KEY_GRAVE_ACCENT && action == GLFW_RELEASE) {
-        std::cout << "shit" << std::endl;
-    
+        
         if (cursorDisable) {
             // tell GLFW to capture our mouse
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
