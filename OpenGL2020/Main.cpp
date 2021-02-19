@@ -1,7 +1,8 @@
-﻿
+﻿#include<iostream>
+
 #include<glad/glad.h>
 #include<GLFW/glfw3.h>
-#include<iostream>
+
 #include<glm/glm.hpp>
 #include<glm/gtc/matrix_transform.hpp>
 #include<glm/gtc/type_ptr.hpp>
@@ -35,9 +36,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 //void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow* window);
 //Imgui
-void loadImgui(ImVec4& imObjColor, float& modelAngelX,float& modelAngelY, float& modelAngelZ,
-               glm::vec3& lightPos, glm::vec3& ambient, glm::vec3& specular, glm::vec3& diffuse,
-               float& shininess);
+void loadImgui();
 
 void console(GLFWwindow* win, int key, int code, int action, int mods);
 int main() {
@@ -108,6 +107,13 @@ int main() {
         glm::vec3(-1.3f,  1.0f, -1.5f)
     };
     
+    glm::vec3 pointLightPositions[] = {
+        glm::vec3(0.7f,  0.2f,  2.0f),
+        glm::vec3(2.3f, -3.3f, -4.0f),
+        glm::vec3(-4.0f,  2.0f, -12.0f),
+        glm::vec3(0.0f,  0.0f, -3.0f)
+    };
+
     float vertices[] = {
     //顶点                纹理          法向量
     -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,  0.0f,  0.0f, -1.0f,
@@ -209,6 +215,7 @@ int main() {
     }
     stbi_image_free(data);
 
+    
 
     unsigned int textureFace;
     glGenTextures(1, &textureFace);
@@ -229,7 +236,7 @@ int main() {
     }
     stbi_image_free(data);
     
-
+    
     
     ourShader.use();
     ourShader.setInt("material.diffuse", 0);
@@ -239,7 +246,6 @@ int main() {
     
     // Our state for Imgui
     ImVec4 imObjColor = ImVec4(1.0f, 0.5f, 0.31f, 1.00f);
-    glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
     
     float modelAngelX = 0.0f;
     float modelAngelY = 0.0f;
@@ -258,7 +264,7 @@ int main() {
 
         ImGui::ShowDemoWindow();
 
-        loadImgui(imObjColor, modelAngelX, modelAngelY, modelAngelZ, lightPos, ambient, specular, diffuse, shininess);
+        loadImgui();
 
         // per-frame time logic
         // --------------------
@@ -271,30 +277,40 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // input
+        processInput(window);
         // -----
         ourShader.use();
-        processInput(window);
-        glm::vec3 objColor(imObjColor.x, imObjColor.y, imObjColor.z);
-        ourShader.setVec3("objectColor", objColor);
-        ourShader.setVec3("light.position", lightPos);
+        
+
         ourShader.setVec3("viewPos", camera.Position);
 
+        //定义材质
         ourShader.setVec3("material.specular", specular);
         ourShader.setFloat("material.shininess", shininess);
 
-        ourShader.setVec3("spotlight.position", camera.Position);
-        ourShader.setVec3("spotlight.direction", camera.Front);
-        ourShader.setFloat("spotlight.cutOff", glm::cos(glm::radians(12.5f)));
-        ourShader.setFloat("spotlight.outerCutOff", glm::cos(glm::radians(17.5f)));
+        //定义平行光
+        ourShader.setVec3("dirLight.direction", -0.2f,-1.0f,-0.3f);
 
-        ourShader.setVec3("spotlight.ambient", 1.0f, 1.0f, 1.0f);
-        ourShader.setVec3("spotlight.diffuse", 1.0f, 1.0f, 1.0f);
-        ourShader.setVec3("spotlight.specular", 1.0f,1.0f,1.0f);
+        ourShader.setVec3("dirLight.ambient", 0.2f, 0.2f, 0.2f);
+        ourShader.setVec3("dirLight.diffuse", 0.5f, 0.5f, 0.5f);
+        ourShader.setVec3("dirLight.specular", 1.0f, 1.0f, 1.0f);
 
-        ourShader.setFloat("spotlight.constant", 1.0f);
-        ourShader.setFloat("spotlight.linear", 0.09f);
-        ourShader.setFloat("spotlight.quadratic", 0.032f);
 
+        //定义聚光
+        ourShader.setVec3("spotLight.position", camera.Position);
+        ourShader.setVec3("spotLight.direction", camera.Front);
+        ourShader.setFloat("spotLight.cutOff", glm::cos(glm::radians(12.5f)));
+        ourShader.setFloat("spotLight.outerCutOff", glm::cos(glm::radians(17.5f)));
+
+        ourShader.setVec3("spotLight.ambient", 1.0f, 1.0f, 1.0f);
+        ourShader.setVec3("spotLight.diffuse", 1.0f, 1.0f, 1.0f);
+        ourShader.setVec3("spotLight.specular", 1.0f, 1.0f, 1.0f);
+
+        ourShader.setFloat("spotLight.constant", 1.0f);
+        ourShader.setFloat("spotLight.linear", 0.09f);
+        ourShader.setFloat("spotLight.quadratic", 0.032f);
+
+        
 
         // pass projection matrix to shader (note that in this case it could change every frame)
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)screenWidth / (float)screenHeight, 0.1f, 100.0f);
@@ -335,15 +351,36 @@ int main() {
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
 
-        //光源变换矩阵
-        lightShader.use();
-        lightShader.setMat4("projection", projection);
-        lightShader.setMat4("view", view);
-        glm::mat4 light;
-        light = glm::translate(light, lightPos);
-        light = glm::scale(light, glm::vec3(0.5f, 0.5f, 0.5f));
-        lightShader.setMat4("model",light);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        //定义点光源
+        for (int i = 0; i < 4; i++) {
+            
+            //光源变换矩阵
+            lightShader.use();
+            lightShader.setMat4("projection", projection);
+            lightShader.setMat4("view", view);
+            glm::mat4 light;
+            light = glm::translate(light, pointLightPositions[i]);
+            light = glm::scale(light, glm::vec3(0.5f, 0.5f, 0.5f));
+            lightShader.setMat4("model", light);
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+
+            ourShader.use();
+            char buffer[100];
+            sprintf_s(buffer, "light[%d].position", i);
+            ourShader.setVec3(buffer, pointLightPositions[i]);
+            sprintf_s(buffer, "light[%d].ambient", i);
+            ourShader.setVec3(buffer, 0.2f, 0.2f, 0.2f);
+            sprintf_s(buffer, "light[%d].diffuse", i);
+            ourShader.setVec3(buffer, 0.5f, 0.5f, 0.5f);
+            sprintf_s(buffer, "light[%d].specular", i);
+            ourShader.setVec3(buffer, 1.0f, 1.0f, 1.0f);
+            sprintf_s(buffer, "light[%d].constant", i);
+            ourShader.setFloat(buffer, 1.0f);
+            sprintf_s(buffer, "light[%d].linear", i);
+            ourShader.setFloat(buffer, 0.09f);
+            sprintf_s(buffer, "light[%d].quadratic", i);
+            ourShader.setFloat(buffer, 0.032f);
+        }
 
 
         glBindVertexArray(0);
@@ -426,33 +463,31 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
     }
 }
 
-void loadImgui(ImVec4& imObjColor,float &modelAngelX, float& modelAngelY,float& modelAngelZ,
-               glm::vec3 &lightPos, glm::vec3& ambient, glm::vec3& specular,
-               glm::vec3& diffuse,float& shininess) {
+void loadImgui() {
 
     ImGui::Begin("Lighting test");                          // Create a window called "Hello, world!" and append into it.
 
-    ImGui::ColorEdit3("Object color", (float*)&imObjColor); // Edit 3 floats representing a color
+    //ImGui::ColorEdit3("Object color", (float*)&imObjColor); // Edit 3 floats representing a color
 
-    ImGui::SliderAngle("modelAngel X", &modelAngelX, -90.0f, 90.0f);
-    ImGui::SliderAngle("modelAngel Y", &modelAngelY, -90.0f, 90.0f);
-    ImGui::SliderAngle("modelAngel Z", &modelAngelZ, -90.0f, 90.0f);
+    //ImGui::SliderAngle("modelAngel X", &modelAngelX, -90.0f, 90.0f);
+    //ImGui::SliderAngle("modelAngel Y", &modelAngelY, -90.0f, 90.0f);
+    //ImGui::SliderAngle("modelAngel Z", &modelAngelZ, -90.0f, 90.0f);
 
-    ImGui::DragFloat("lightPos x", &lightPos.x, 0.005f);
-    ImGui::DragFloat("lightPos y", &lightPos.y, 0.005f);
-    ImGui::DragFloat("lightPos z", &lightPos.z, 0.005f);
-    float ambientTemp[3] = { ambient.x,ambient.y,ambient.z };
-    ImGui::DragFloat3("ambient", ambientTemp, 0.005f);
-    float specularTemp[3] = { specular.x,specular.y,specular.z };
-    ImGui::DragFloat3("specular", specularTemp, 0.005f);
-    float diffuseTemp[3] = { diffuse.x,diffuse.y,diffuse.z };
-    ImGui::DragFloat3("diffuse", diffuseTemp, 0.005f);
+    //ImGui::DragFloat("lightPos x", &lightPos.x, 0.005f);
+    //ImGui::DragFloat("lightPos y", &lightPos.y, 0.005f);
+    //ImGui::DragFloat("lightPos z", &lightPos.z, 0.005f);
+    //float ambientTemp[3] = { ambient.x,ambient.y,ambient.z };
+    //ImGui::DragFloat3("ambient", ambientTemp, 0.005f);
+    //float specularTemp[3] = { specular.x,specular.y,specular.z };
+    //ImGui::DragFloat3("specular", specularTemp, 0.005f);
+    //float diffuseTemp[3] = { diffuse.x,diffuse.y,diffuse.z };
+    //ImGui::DragFloat3("diffuse", diffuseTemp, 0.005f);
 
-    ImGui::DragFloat("shininess", &shininess, 0.005f);
+    //ImGui::DragFloat("shininess", &shininess, 0.005f);
 
-    ambient = glm::make_vec3(ambientTemp);
+    /*ambient = glm::make_vec3(ambientTemp);
     specular = glm::make_vec3(specularTemp);
-    diffuse = glm::make_vec3(diffuseTemp);
+    diffuse = glm::make_vec3(diffuseTemp);*/
 
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
     ImGui::End();
