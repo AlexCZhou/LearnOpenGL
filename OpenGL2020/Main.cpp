@@ -11,7 +11,7 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 
-
+#include "Model.h"
 #include "Shader.h"
 #include "Camera.h"
 #include "stb_image.h"
@@ -87,7 +87,9 @@ int main() {
     
     Shader ourShader("Resource/shader/shader.vsh", "Resource/shader/shader.fsh");
     Shader lightShader("Resource/shader/shader.vsh", "Resource/shader/light.fsh");
-   
+    //模型加载
+    Model ourModel("Resource/model/nanosuit.obj");
+
     //创建IMGUI
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -162,6 +164,8 @@ int main() {
     -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,  0.0f,  1.0f,  0.0f,
     -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,  0.0f,  1.0f,  0.0f
     };
+
+    
 
     unsigned int VBO, VAO;
     glGenVertexArrays(1, &VAO);
@@ -239,6 +243,7 @@ int main() {
         std::cout << "Failed to load texture" << std::endl;
     }
     stbi_image_free(data);
+    
     
     
     
@@ -347,8 +352,16 @@ int main() {
 
         ourShader.setMat4("model", model);
         glDrawArrays(GL_TRIANGLES, 0, 36);
+        //渲染模型
+        ourModel.Draw(ourShader);
 
+        
         //箱子来
+        glBindVertexArray(VAO);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, textureBox);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, textureFace);
         for (unsigned int i = 0; i < 9; i++) {
             glm::mat4 model;
             model = glm::translate(model, cubePositions[i]);
@@ -359,6 +372,8 @@ int main() {
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
         
+        
+
         //定义点光源
         for (int i = 0; i < 4; i++) {
             
