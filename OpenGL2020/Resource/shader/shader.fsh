@@ -17,6 +17,8 @@ struct Material {
 struct MaterialWithMap {
     sampler2D diffuse;
     sampler2D specular;
+    sampler2D texture_diffuse1;
+    sampler2D texture_specular1;
     float     shininess;
 }; 
 
@@ -91,7 +93,7 @@ void main(){
     vec3 output;
     vec3 viewDir = normalize(viewPos - FragPos);
 
-    output += calcDirLight(dirLight, Normal, viewDir);
+    //output += calcDirLight(dirLight, Normal, viewDir);
     for(int i=0;i<NR_POINT_LIGHTS;i++){
         output += calcPointLight(light[i],Normal,FragPos,viewDir);
     }
