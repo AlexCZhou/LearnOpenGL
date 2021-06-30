@@ -1,4 +1,4 @@
 # LearnOpenGL
 My LearnOpenGL repository
 
-![img](learnOpenGL.gif)
+![img](learnOpenGL1.gif)
